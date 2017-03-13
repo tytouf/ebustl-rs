@@ -134,52 +134,37 @@ named!(parse_tti_block<TtiBlock>,
     jc: be_u8 >>
     cf: be_u8 >>
     tf: take!(112) >>
-    (TtiBlock{sgn: sgn, sn: sn, ebn: ebn, cs: cs, tci: tci, tco: tco, vp: vp, jc: jc, cf: cf, tf: tf.to_vec()})
+    (TtiBlock{sgn: sgn, sn: sn, ebn: ebn, cs: cs, tci: tci, tco: tco, vp: vp,
+        jc: jc, cf: cf, tf: tf.to_vec()})
   )
 );
 
 #[cfg(test)]
 mod tests {
-    /*
     use super::*;
     use nom::IResult::*;
-    use nom::{Needed, ErrorKind};
+    use nom::Needed;
 
     #[test]
     fn test_parse_time() {
-        let empty: &[u8] = b"";
-        let ok = b"01:42:05,123";
-        let error = b"01,42:05,123";
-        let incomplete = b"01:42:05";
+        let empty: &[u8] = &vec![];
+        let ok = &vec![0x1, 0x2, 0x3, 0x4];
+        let incomplete = &vec![0x1];
 
         assert_eq!(parse_time(ok), Done(empty, Time{
             hours: 1,
-            minutes: 42,
-            seconds: 5,
-            milliseconds: 123,
+            minutes: 2,
+            seconds: 3,
+            frames: 4,
             }));
-        assert_eq!(parse_time(error), Error(ErrorKind::Char));
         assert_eq!(parse_time(incomplete), Incomplete(Needed::Size(incomplete.len()+1)));
     }
 
+    /* TODO
     #[test]
-    fn test_parse_sub() {
-        let empty: &[u8] = b"";
-        let ok = b"1\n01:42:05,123 --> 01:42:06,456\nFirst line\nSecond line\n\n";
-        let error_1 = b"1\n01:42:05,,123 --> 01:42:06,456\nFirst line\nSecond line\n\n";
-        let error_2 = b"1\n01:42:05,123 -a-> 01:42:06,456\nFirst line\nSecond line\n\n";
-        let error_3 = b"1\n01:42:05,123 --> 01::42:06,456\nFirst line\nSecond line\n\n";
-        let incomplete = b"01:42:05";
-
-        assert_eq!(parse_sub(ok), Done(empty, SubTitle{
-            index: 1,
-            start_time: Time{hours: 1, minutes: 42, seconds: 5, milliseconds: 123},
-            end_time: Time{hours: 1, minutes: 42, seconds: 6, milliseconds: 456},
-            text: String::from_str("First line\nSecond line").unwrap(),
-            }));
-        assert_eq!(parse_sub(error_1), Error(ErrorKind::Custom(1)));
-        assert_eq!(parse_sub(error_2), Error(ErrorKind::Custom(2)));
-        assert_eq!(parse_sub(error_3), Error(ErrorKind::Custom(3)));
+    fn test_parse_tti() {
+    }
+    fn test_parse_gsi() {
     }
     */
 }

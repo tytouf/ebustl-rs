@@ -107,11 +107,11 @@ impl CodePageNumber {
 
     fn serialize(&self) -> Vec<u8> {
         return match *self {
-                   CodePageNumber::CPN_437 => vec!(0x34, 0x33, 0x37),
-                   CodePageNumber::CPN_850 => vec!(0x38, 0x35, 0x30),
-                   CodePageNumber::CPN_860 => vec!(0x38, 0x36, 0x30),
-                   CodePageNumber::CPN_863 => vec!(0x38, 0x36, 0x33),
-                   CodePageNumber::CPN_865 => vec!(0x38, 0x36, 0x35),
+                   CodePageNumber::CPN_437 => vec![0x34, 0x33, 0x37],
+                   CodePageNumber::CPN_850 => vec![0x38, 0x35, 0x30],
+                   CodePageNumber::CPN_860 => vec![0x38, 0x36, 0x30],
+                   CodePageNumber::CPN_863 => vec![0x38, 0x36, 0x33],
+                   CodePageNumber::CPN_865 => vec![0x38, 0x36, 0x35],
                };
     }
 }
@@ -199,11 +199,11 @@ impl CharacterCodeTable {
 
     fn serialize(&self) -> Vec<u8> {
         return match *self {
-                   CharacterCodeTable::Latin => vec!(0x30, 0x30),
-                   CharacterCodeTable::LatinCyrillic => vec!(0x30, 0x31),
-                   CharacterCodeTable::LatinArabic => vec!(0x30, 0x32),
-                   CharacterCodeTable::LatinGreek => vec!(0x30, 0x33),
-                   CharacterCodeTable::LatinHebrew => vec!(0x30, 0x34),
+                   CharacterCodeTable::Latin => vec![0x30, 0x30],
+                   CharacterCodeTable::LatinCyrillic => vec![0x30, 0x31],
+                   CharacterCodeTable::LatinArabic => vec![0x30, 0x32],
+                   CharacterCodeTable::LatinGreek => vec![0x30, 0x33],
+                   CharacterCodeTable::LatinHebrew => vec![0x30, 0x34],
                };
     }
 }
@@ -399,7 +399,12 @@ impl GsiBlock {
 
 impl fmt::Display for GsiBlock {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Program Title: {}\nEpisode Title: {}\ncct:{:?} lc:{}\n", self.opt, self.oet, self.cct, self.lc,)
+        write!(f,
+               "Program Title: {}\nEpisode Title: {}\ncct:{:?} lc:{}\n",
+               self.opt,
+               self.oet,
+               self.cct,
+               self.lc)
     }
 }
 
@@ -460,16 +465,25 @@ impl Time {
     }
 
     pub fn format_fps(&self, fps: usize) -> String {
-        format!("{}:{}:{},{}", self.hours, self.minutes, self.seconds, self.frames as usize * 1000 / fps)
+        format!("{}:{}:{},{}",
+                self.hours,
+                self.minutes,
+                self.seconds,
+                self.frames as usize * 1000 / fps)
     }
     fn serialize(&self) -> Vec<u8> {
-        vec!(self.hours, self.minutes, self.seconds, self.frames)
+        vec![self.hours, self.minutes, self.seconds, self.frames]
     }
 }
 
 impl fmt::Display for Time {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}:{}:{}/{})", self.hours, self.minutes, self.seconds, self.frames)
+        write!(f,
+               "{}:{}:{}/{})",
+               self.hours,
+               self.minutes,
+               self.seconds,
+               self.frames)
     }
 }
 
@@ -589,30 +603,30 @@ impl TtiBlock {
 
 impl fmt::Debug for TtiBlock {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "\n{}-->{} sgn:{} sn:{} ebn:{} cs:{:?} vp:{} jc:{} cf:{} [{}]", self.tci, self.tco, self.sgn, self.sn, self.ebn, self.cs, self.vp, self.jc, self.cf, self.get_text())
+        write!(f,
+               "\n{}-->{} sgn:{} sn:{} ebn:{} cs:{:?} vp:{} jc:{} cf:{} [{}]",
+               self.tci,
+               self.tco,
+               self.sgn,
+               self.sn,
+               self.ebn,
+               self.cs,
+               self.vp,
+               self.jc,
+               self.cf,
+               self.get_text())
     }
 }
 
 impl fmt::Display for TtiBlock {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "\n{} {} {} {} {:?} [{}]", self.tci, self.sgn, self.sn, self.ebn, self.cs, self.get_text())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::io::prelude::*;
-    use std::fs::File;
-
-    #[test]
-    fn stl2srt() {
-        let stl = parse_stl_from_file("assets/test.stl").unwrap();
-        let mut f_out = File::create("assets/test.srt").unwrap();
-        // Ouput SRT file
-        let fps = stl.gsi.dfc.get_fps();
-        for (i, tti) in stl.ttis.iter().enumerate() {
-            write!(f_out, "{}\n{} --> {}\n{}\n", i, tti.tci.format_fps(fps), tti.tco.format_fps(fps), tti.get_text());
-        }
+        write!(f,
+               "\n{} {} {} {} {:?} [{}]",
+               self.tci,
+               self.sgn,
+               self.sn,
+               self.ebn,
+               self.cs,
+               self.get_text())
     }
 }
