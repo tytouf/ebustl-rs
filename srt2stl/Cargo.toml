@@ -1,0 +1,8 @@
+[package]
+name = "srt2stl"
+version = "0.1.0"
+authors = ["Christophe Augier <christophe.augier@gmail.com>"]
+
+[dependencies]
+srt = "^0.1"
+ebustl = { path = "../" }
