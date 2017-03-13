@@ -1,0 +1,15 @@
+[package]
+name = "ebustl"
+version = "0.1.0"
+description = "Parse subtitle files in the EBU-STL format with Rust."
+authors = ["Christophe Augier <christophe.augier@gmail.com>"]
+license = "MIT"
+repository = "https://github.com/tytouf/ebustl-rs"
+readme = "README.md"
+keywords = ["stl", "subtitle", "parser"]
+categories = ["multimedia:video", "parser-implementations"]
+
+[dependencies]
+nom = "^2.1"
+iso6937 = "^0.1"
+chrono = "^0.3"
