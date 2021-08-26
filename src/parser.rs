@@ -17,8 +17,8 @@ pub enum ParseError {
     DisplayStandardCode,
     #[error("Error parsing Time Code Status")]
     TimeCodeStatus,
-    #[error("Error parsing Disk Format Code")]
-    DiskFormatCode,
+    #[error("Error parsing Disk Format Code: {0}")]
+    DiskFormatCode(String),
     #[error("Error parsing Character Code Table")]
     CharacterCodeTable,
     #[error("Error parsing Cumulative Status")]

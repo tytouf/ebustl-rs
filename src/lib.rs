@@ -77,7 +77,7 @@ pub fn parse_stl_from_file(filename: &str) -> Result<Stl, ParseError> {
 
 #[derive(Debug)]
 #[allow(non_camel_case_types)]
-enum CodePageNumber {
+pub enum CodePageNumber {
     CPN_437,
     CPN_850,
     CPN_860,
@@ -116,7 +116,7 @@ impl CodePageNumber {
 }
 
 #[derive(Debug)]
-enum DisplayStandardCode {
+pub enum DisplayStandardCode {
     Blank,
     OpenSubtitling,
     Level1Teletext,
@@ -145,7 +145,7 @@ impl DisplayStandardCode {
 }
 
 #[derive(Debug)]
-enum TimeCodeStatus {
+pub enum TimeCodeStatus {
     NotIntendedForUse,
     IntendedForUse,
 }
@@ -168,7 +168,7 @@ impl TimeCodeStatus {
 }
 
 #[derive(Debug)]
-enum CharacterCodeTable {
+pub enum CharacterCodeTable {
     Latin,
     LatinCyrillic,
     LatinArabic,
@@ -219,7 +219,7 @@ impl DiskFormatCode {
         } else if data == "STL30.01" {
             Ok(DiskFormatCode::STL30_01)
         } else {
-            Err(ParseError::DiskFormatCode)
+            Err(ParseError::DiskFormatCode(data.to_string()))
         }
     }
 
@@ -302,6 +302,99 @@ pub struct GsiBlock {
     _spare: String,
     #[doc = "448..1023 User-Defined Area"]
     uda: String,
+}
+
+impl GsiBlock {
+    pub fn get_code_page_number(&self) -> &CodePageNumber {
+        &self.cpn
+    }
+    pub fn get_disk_format_code(&self) -> &DiskFormatCode {
+        &self.dfc
+    }
+    pub fn get_display_standard_code(&self) -> &DisplayStandardCode {
+        &self.dsc
+    }
+    pub fn get_character_code_table(&self) -> &CharacterCodeTable {
+        &self.cct
+    }
+    pub fn get_language_code(&self) -> &str {
+        &self.lc
+    }
+    pub fn get_original_program_title(&self) -> &str {
+        &self.opt
+    }
+    pub fn get_original_episode_title(&self) -> &str {
+        &self.oet
+    }
+    pub fn get_translated_program_title(&self) -> &str {
+        &self.tpt
+    }
+    pub fn get_translated_episode_title(&self) -> &str {
+        &self.tet
+    }
+    pub fn get_translators_name(&self) -> &str {
+        &self.tn
+    }
+    pub fn get_translators_contact_details(&self) -> &str {
+        &self.tcd
+    }
+    pub fn get_subtitle_list_reference_code(&self) -> &str {
+        &self.slr
+    }
+    pub fn get_creation_date(&self) -> &str {
+        &self.cd
+    }
+    pub fn get_revision_date(&self) -> &str {
+        &self.rd
+    }
+    pub fn get_revision_number(&self) -> &str {
+        &self.rn
+    }
+    pub fn get_total_number_of_text_and_timing_blocks(&self) -> u16 {
+        self.tnb
+    }
+    pub fn get_total_number_of_subtitles(&self) -> u16 {
+        self.tns
+    }
+    pub fn get_total_number_of_chars_in_row(&self) -> u16 {
+        self.tng
+    }
+    pub fn get_max_number_of_chars_in_row(&self) -> u16 {
+        self.mnc
+    }
+    pub fn get_max_number_of_rows(&self) -> u16 {
+        self.mnr
+    }
+    pub fn get_timecode_status(&self) -> &TimeCodeStatus {
+        &self.tcs
+    }
+    pub fn get_timecode_start_of_program(&self) -> &str {
+        &self.tcp
+    }
+    pub fn get_timecode_first_in_cue(&self) -> &str {
+        &self.tcf
+    }
+    pub fn get_total_number_of_disks(&self) -> u8 {
+        self.tnd
+    }
+    pub fn get_disk_sequence_number(&self) -> u8 {
+        self.dsn
+    }
+    pub fn get_country_of_origin(&self) -> &str {
+        &self.co
+    }
+    pub fn get_publisher(&self) -> &str {
+        &self.pub_
+    }
+    pub fn get_editors_name(&self) -> &str {
+        &self.en
+    }
+    pub fn get_editors_contact_details(&self) -> &str {
+        &self.ecd
+    }
+    pub fn get_user_defined_area(&self) -> &str {
+        &self.uda
+    }
 }
 
 fn push_string(v: &mut Vec<u8>, s: &String, len: usize) {
