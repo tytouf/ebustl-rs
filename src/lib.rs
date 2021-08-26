@@ -591,10 +591,10 @@ impl TtiBlock {
         for i in 0..self.tf.len() {
             let c = self.tf[i];
             if match c {
-                   0x0...0x1f => true, //TODO: decode teletext control codes
-                   0x20...0x7f => false,
-                   0x7f...0x9f => true, // TODO: decode codes
-                   0xa1...0xff => false,
+                   0x0..=0x1f => true, //TODO: decode teletext control codes
+                   0x20..=0x7f => false,
+                   0x7f..=0x9f => true, // TODO: decode codes
+                   0xa1..=0xff => false,
                    _ => break,
                } {
                 if first != i {
