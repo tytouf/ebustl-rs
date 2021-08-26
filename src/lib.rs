@@ -1,17 +1,17 @@
 #[macro_use]
 extern crate nom;
-extern crate iso6937;
 extern crate chrono;
+extern crate iso6937;
 
 use std::fmt;
-use std::str;
+use std::fs::File;
 use std::io;
 use std::io::prelude::*;
-use std::fs::File;
+use std::str;
 
 pub mod parser;
-pub use parser::ParseError;
-use parser::parse_stl_from_slice;
+use crate::parser::parse_stl_from_slice;
+pub use crate::parser::ParseError;
 
 // STL File
 
@@ -28,11 +28,11 @@ impl fmt::Display for Stl {
 }
 
 pub struct TtiFormat {
-    #[doc="Justification Code"]
+    #[doc = "Justification Code"]
     pub jc: u8,
-    #[doc="Vertical Position"]
+    #[doc = "Vertical Position"]
     pub vp: u8,
-    #[doc="Double Height"]
+    #[doc = "Double Height"]
     pub dh: bool,
 }
 
@@ -73,7 +73,6 @@ pub fn parse_stl_from_file(filename: &str) -> Result<Stl, ParseError> {
     parse_stl_from_slice(&buffer)
 }
 
-
 // GSI Block
 
 #[derive(Debug)]
@@ -107,15 +106,14 @@ impl CodePageNumber {
 
     fn serialize(&self) -> Vec<u8> {
         return match *self {
-                   CodePageNumber::CPN_437 => vec![0x34, 0x33, 0x37],
-                   CodePageNumber::CPN_850 => vec![0x38, 0x35, 0x30],
-                   CodePageNumber::CPN_860 => vec![0x38, 0x36, 0x30],
-                   CodePageNumber::CPN_863 => vec![0x38, 0x36, 0x33],
-                   CodePageNumber::CPN_865 => vec![0x38, 0x36, 0x35],
-               };
+            CodePageNumber::CPN_437 => vec![0x34, 0x33, 0x37],
+            CodePageNumber::CPN_850 => vec![0x38, 0x35, 0x30],
+            CodePageNumber::CPN_860 => vec![0x38, 0x36, 0x30],
+            CodePageNumber::CPN_863 => vec![0x38, 0x36, 0x33],
+            CodePageNumber::CPN_865 => vec![0x38, 0x36, 0x35],
+        };
     }
 }
-
 
 #[derive(Debug)]
 enum DisplayStandardCode {
@@ -128,21 +126,21 @@ enum DisplayStandardCode {
 impl DisplayStandardCode {
     fn parse(data: u8) -> Result<DisplayStandardCode, ParseError> {
         return match data {
-                   0x20 => Ok(DisplayStandardCode::Blank),
-                   0x30 => Ok(DisplayStandardCode::OpenSubtitling),
-                   0x31 => Ok(DisplayStandardCode::Level1Teletext),
-                   0x32 => Ok(DisplayStandardCode::Level2Teletext),
-                   _ => Err(ParseError::DisplayStandardCode),
-               };
+            0x20 => Ok(DisplayStandardCode::Blank),
+            0x30 => Ok(DisplayStandardCode::OpenSubtitling),
+            0x31 => Ok(DisplayStandardCode::Level1Teletext),
+            0x32 => Ok(DisplayStandardCode::Level2Teletext),
+            _ => Err(ParseError::DisplayStandardCode),
+        };
     }
 
     fn serialize(&self) -> u8 {
         return match *self {
-                   DisplayStandardCode::Blank => 0x20,
-                   DisplayStandardCode::OpenSubtitling => 0x30,
-                   DisplayStandardCode::Level1Teletext => 0x31,
-                   DisplayStandardCode::Level2Teletext => 0x32,
-               };
+            DisplayStandardCode::Blank => 0x20,
+            DisplayStandardCode::OpenSubtitling => 0x30,
+            DisplayStandardCode::Level1Teletext => 0x31,
+            DisplayStandardCode::Level2Teletext => 0x32,
+        };
     }
 }
 
@@ -155,20 +153,19 @@ enum TimeCodeStatus {
 impl TimeCodeStatus {
     fn parse(data: u8) -> Result<TimeCodeStatus, ParseError> {
         return match data {
-                   0x30 => Ok(TimeCodeStatus::NotIntendedForUse),
-                   0x31 => Ok(TimeCodeStatus::IntendedForUse),
-                   _ => Err(ParseError::TimeCodeStatus),
-               };
+            0x30 => Ok(TimeCodeStatus::NotIntendedForUse),
+            0x31 => Ok(TimeCodeStatus::IntendedForUse),
+            _ => Err(ParseError::TimeCodeStatus),
+        };
     }
 
     fn serialize(&self) -> u8 {
         return match *self {
-                   TimeCodeStatus::NotIntendedForUse => 0x30,
-                   TimeCodeStatus::IntendedForUse => 0x31,
-               };
+            TimeCodeStatus::NotIntendedForUse => 0x30,
+            TimeCodeStatus::IntendedForUse => 0x31,
+        };
     }
 }
-
 
 #[derive(Debug)]
 enum CharacterCodeTable {
@@ -199,12 +196,12 @@ impl CharacterCodeTable {
 
     fn serialize(&self) -> Vec<u8> {
         return match *self {
-                   CharacterCodeTable::Latin => vec![0x30, 0x30],
-                   CharacterCodeTable::LatinCyrillic => vec![0x30, 0x31],
-                   CharacterCodeTable::LatinArabic => vec![0x30, 0x32],
-                   CharacterCodeTable::LatinGreek => vec![0x30, 0x33],
-                   CharacterCodeTable::LatinHebrew => vec![0x30, 0x34],
-               };
+            CharacterCodeTable::Latin => vec![0x30, 0x30],
+            CharacterCodeTable::LatinCyrillic => vec![0x30, 0x31],
+            CharacterCodeTable::LatinArabic => vec![0x30, 0x32],
+            CharacterCodeTable::LatinGreek => vec![0x30, 0x33],
+            CharacterCodeTable::LatinHebrew => vec![0x30, 0x34],
+        };
     }
 }
 
@@ -228,82 +225,82 @@ impl DiskFormatCode {
 
     fn serialize(&self) -> Vec<u8> {
         return match *self {
-                   DiskFormatCode::STL25_01 => String::from("STL25.01").into_bytes(),
-                   DiskFormatCode::STL30_01 => String::from("STL30.01").into_bytes(),
-               };
+            DiskFormatCode::STL25_01 => String::from("STL25.01").into_bytes(),
+            DiskFormatCode::STL30_01 => String::from("STL30.01").into_bytes(),
+        };
     }
 
-    pub fn get_fps(self) -> usize {
+    pub fn get_fps(&self) -> usize {
         return match self {
-                   DiskFormatCode::STL25_01 => 25,
-                   DiskFormatCode::STL30_01 => 30,
-               };
+            DiskFormatCode::STL25_01 => 25,
+            DiskFormatCode::STL30_01 => 30,
+        };
     }
 }
 
 #[derive(Debug)]
 pub struct GsiBlock {
-    #[doc="0..2 Code Page Number"]
+    #[doc = "0..2 Code Page Number"]
     cpn: CodePageNumber,
-    #[doc="3..10 Disk Format Code"]
+    #[doc = "3..10 Disk Format Code"]
     dfc: DiskFormatCode,
-    #[doc="11 Display Standard Code"]
+    #[doc = "11 Display Standard Code"]
     dsc: DisplayStandardCode,
-    #[doc="12..13 Character Code Table Number"]
+    #[doc = "12..13 Character Code Table Number"]
     cct: CharacterCodeTable,
-    #[doc="14..15 Language Code"]
+    #[doc = "14..15 Language Code"]
     lc: String,
-    #[doc="16..47 Original Program Title"]
+    #[doc = "16..47 Original Program Title"]
     opt: String,
-    #[doc="48..79 Original Episode Title"]
+    #[doc = "48..79 Original Episode Title"]
     oet: String,
-    #[doc="80..111 Translated Program Title"]
+    #[doc = "80..111 Translated Program Title"]
     tpt: String,
-    #[doc="112..143 Translated Episode Title"]
+    #[doc = "112..143 Translated Episode Title"]
     tet: String,
-    #[doc="144..175 Translator's Name"]
+    #[doc = "144..175 Translator's Name"]
     tn: String,
-    #[doc="176..207 Translator's Contact Details"]
+    #[doc = "176..207 Translator's Contact Details"]
     tcd: String,
-    #[doc="208..223 Subtitle List Reference Code"]
+    #[doc = "208..223 Subtitle List Reference Code"]
     slr: String,
-    #[doc="224..229 Creation Date"]
+    #[doc = "224..229 Creation Date"]
     cd: String,
-    #[doc="230..235 Revision Date"]
+    #[doc = "230..235 Revision Date"]
     rd: String,
-    #[doc="236..237 Revision Number"]
+    #[doc = "236..237 Revision Number"]
     rn: String,
-    #[doc="238..242 Total Number of Text and Timing Blocks"]
+    #[doc = "238..242 Total Number of Text and Timing Blocks"]
     tnb: u16,
-    #[doc="243..247 Total Number of Subtitles"]
+    #[doc = "243..247 Total Number of Subtitles"]
     tns: u16,
-    #[doc="248..250 Total Number of Subtitle Groups"]
+    #[doc = "248..250 Total Number of Subtitle Groups"]
     tng: u16,
-    #[doc="251..252 Maximum Number of Displayable Characters in a Text Row"]
+    #[doc = "251..252 Maximum Number of Displayable Characters in a Text Row"]
     mnc: u16,
-    #[doc="253..254 Maximum Number of Displayable Rows"]
+    #[doc = "253..254 Maximum Number of Displayable Rows"]
     mnr: u16,
-    #[doc="255 Time Code Status"]
+    #[doc = "255 Time Code Status"]
     tcs: TimeCodeStatus,
-    #[doc="256..263 Time Code: Start of Programme (format: HHMMSSFF)"]
+    #[doc = "256..263 Time Code: Start of Programme (format: HHMMSSFF)"]
     tcp: String,
-    #[doc="264..271 Time Code: First-in-Cue (format: HHMMSSFF)"]
+    #[doc = "264..271 Time Code: First-in-Cue (format: HHMMSSFF)"]
     tcf: String,
-    #[doc="272 Total Number of Disks"]
+    #[doc = "272 Total Number of Disks"]
     tnd: u8,
-    #[doc="273 Disk Sequence Number"]
+    #[doc = "273 Disk Sequence Number"]
     dsn: u8,
-    #[doc="274..276 Country of Origin"]
+    #[doc = "274..276 Country of Origin"]
     co: String, // TODO Type with country definitions
-    #[doc="277..308 Publisher"]
+    #[doc = "277..308 Publisher"]
     pub_: String,
-    #[doc="309..340 Editor's Name"]
+    #[doc = "309..340 Editor's Name"]
     en: String,
-    #[doc="341..372 Editor's Contact Details"]
+    #[doc = "341..372 Editor's Contact Details"]
     ecd: String,
-    #[doc="373..447 Spare Bytes"]
+    #[doc = "373..447 Spare Bytes"]
     _spare: String,
-    #[doc="448..1023 User-Defined Area"]
+    #[doc = "448..1023 User-Defined Area"]
     uda: String,
 }
 
@@ -336,7 +333,7 @@ impl GsiBlock {
             rn: "00".to_string(),
             tnb: 0,
             tns: 0,
-            tng: 1, // At least one group?
+            tng: 1,  // At least one group?
             mnc: 40, // FIXME: ok for default?
             mnr: 23, // FIXME: ok for default?
             tcs: TimeCodeStatus::IntendedForUse,
@@ -356,10 +353,7 @@ impl GsiBlock {
     fn serialize(&self) -> Vec<u8> {
         let mut res = Vec::with_capacity(1024);
         res.extend(self.cpn.serialize());
-        res.extend(self.dfc
-                       .serialize()
-                       .iter()
-                       .cloned());
+        res.extend(self.dfc.serialize().iter().cloned());
         res.push(self.dsc.serialize());
         res.extend(self.cct.serialize());
         // be careful for the length of following: must force padding
@@ -399,12 +393,11 @@ impl GsiBlock {
 
 impl fmt::Display for GsiBlock {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f,
-               "Program Title: {}\nEpisode Title: {}\ncct:{:?} lc:{}\n",
-               self.opt,
-               self.oet,
-               self.cct,
-               self.lc)
+        write!(
+            f,
+            "Program Title: {}\nEpisode Title: {}\ncct:{:?} lc:{}\n",
+            self.opt, self.oet, self.cct, self.lc
+        )
     }
 }
 
@@ -421,21 +414,21 @@ pub enum CumulativeStatus {
 impl CumulativeStatus {
     fn parse(d: u8) -> Result<CumulativeStatus, ParseError> {
         return match d {
-                   0 => Ok(CumulativeStatus::NotPartOfASet),
-                   1 => Ok(CumulativeStatus::FirstInSet),
-                   2 => Ok(CumulativeStatus::IntermediateInSet),
-                   3 => Ok(CumulativeStatus::LastInSet),
-                   _ => Err(ParseError::CumulativeStatus),
-               };
+            0 => Ok(CumulativeStatus::NotPartOfASet),
+            1 => Ok(CumulativeStatus::FirstInSet),
+            2 => Ok(CumulativeStatus::IntermediateInSet),
+            3 => Ok(CumulativeStatus::LastInSet),
+            _ => Err(ParseError::CumulativeStatus),
+        };
     }
 
     fn serialize(&self) -> u8 {
         return match *self {
-                   CumulativeStatus::NotPartOfASet => 0,
-                   CumulativeStatus::FirstInSet => 1,
-                   CumulativeStatus::IntermediateInSet => 2,
-                   CumulativeStatus::LastInSet => 3,
-               };
+            CumulativeStatus::NotPartOfASet => 0,
+            CumulativeStatus::FirstInSet => 1,
+            CumulativeStatus::IntermediateInSet => 2,
+            CumulativeStatus::LastInSet => 3,
+        };
     }
 }
 
@@ -465,11 +458,13 @@ impl Time {
     }
 
     pub fn format_fps(&self, fps: usize) -> String {
-        format!("{}:{}:{},{}",
-                self.hours,
-                self.minutes,
-                self.seconds,
-                self.frames as usize * 1000 / fps)
+        format!(
+            "{}:{}:{},{}",
+            self.hours,
+            self.minutes,
+            self.seconds,
+            self.frames as usize * 1000 / fps
+        )
     }
     fn serialize(&self) -> Vec<u8> {
         vec![self.hours, self.minutes, self.seconds, self.frames]
@@ -478,35 +473,34 @@ impl Time {
 
 impl fmt::Display for Time {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f,
-               "{}:{}:{}/{})",
-               self.hours,
-               self.minutes,
-               self.seconds,
-               self.frames)
+        write!(
+            f,
+            "{}:{}:{}/{})",
+            self.hours, self.minutes, self.seconds, self.frames
+        )
     }
 }
 
 pub struct TtiBlock {
-    #[doc="0 Subtitle Group Number. 00h-FFh"]
+    #[doc = "0 Subtitle Group Number. 00h-FFh"]
     sgn: u8,
-    #[doc="1..2 Subtitle Number range. 0000h-FFFFh"]
+    #[doc = "1..2 Subtitle Number range. 0000h-FFFFh"]
     sn: u16,
-    #[doc="3 Extension Block Number. 00h-FFh"]
+    #[doc = "3 Extension Block Number. 00h-FFh"]
     ebn: u8,
-    #[doc="4 Cumulative Status. 00-03h"]
+    #[doc = "4 Cumulative Status. 00-03h"]
     cs: CumulativeStatus,
-    #[doc="5..8 Time Code In"]
+    #[doc = "5..8 Time Code In"]
     tci: Time,
-    #[doc="9..12 Time Code Out"]
+    #[doc = "9..12 Time Code Out"]
     tco: Time,
-    #[doc="13 Vertical Position"]
+    #[doc = "13 Vertical Position"]
     vp: u8,
-    #[doc="14 Justification Code"]
+    #[doc = "14 Justification Code"]
     jc: u8,
-    #[doc="15 Comment Flag"]
+    #[doc = "15 Comment Flag"]
     cf: u8,
-    #[doc="16..127 Text Field"]
+    #[doc = "16..127 Text Field"]
     tf: Vec<u8>,
 }
 
@@ -543,7 +537,6 @@ impl TtiBlock {
     }
 }
 
-
 impl TtiBlock {
     pub fn new(idx: u16, tci: Time, tco: Time, txt: &str, opt: TtiFormat) -> TtiBlock {
         TtiBlock {
@@ -551,8 +544,8 @@ impl TtiBlock {
             sn: idx,
             ebn: 0xff,
             cs: CumulativeStatus::NotPartOfASet,
-            tci: tci,
-            tco: tco,
+            tci,
+            tco,
             vp: opt.vp,
             jc: opt.jc,
             cf: 0,
@@ -591,12 +584,11 @@ impl TtiBlock {
         for i in 0..self.tf.len() {
             let c = self.tf[i];
             if match c {
-                   0x0..=0x1f => true, //TODO: decode teletext control codes
-                   0x20..=0x7f => false,
-                   0x7f..=0x9f => true, // TODO: decode codes
-                   0xa1..=0xff => false,
-                   _ => break,
-               } {
+                0x0..=0x1f => true, //TODO: decode teletext control codes
+                0x20..=0x7f => false,
+                0x80..=0x9f => true, // TODO: decode codes
+                0xa0..=0xff => false,
+            } {
                 if first != i {
                     result.push_str(&iso6937::decode(&self.tf[first..i]));
                 }
@@ -618,14 +610,8 @@ impl TtiBlock {
         res.push((self.sn >> 8) as u8);
         res.push(self.ebn);
         res.push(self.cs.serialize());
-        res.extend(self.tci
-                       .serialize()
-                       .iter()
-                       .cloned());
-        res.extend(self.tco
-                       .serialize()
-                       .iter()
-                       .cloned());
+        res.extend(self.tci.serialize().iter().cloned());
+        res.extend(self.tco.serialize().iter().cloned());
         res.push(self.vp);
         res.push(self.jc);
         res.push(self.cf);
@@ -636,30 +622,34 @@ impl TtiBlock {
 
 impl fmt::Debug for TtiBlock {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f,
-               "\n{}-->{} sgn:{} sn:{} ebn:{} cs:{:?} vp:{} jc:{} cf:{} [{}]",
-               self.tci,
-               self.tco,
-               self.sgn,
-               self.sn,
-               self.ebn,
-               self.cs,
-               self.vp,
-               self.jc,
-               self.cf,
-               self.get_text())
+        write!(
+            f,
+            "\n{}-->{} sgn:{} sn:{} ebn:{} cs:{:?} vp:{} jc:{} cf:{} [{}]",
+            self.tci,
+            self.tco,
+            self.sgn,
+            self.sn,
+            self.ebn,
+            self.cs,
+            self.vp,
+            self.jc,
+            self.cf,
+            self.get_text()
+        )
     }
 }
 
 impl fmt::Display for TtiBlock {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f,
-               "\n{} {} {} {} {:?} [{}]",
-               self.tci,
-               self.sgn,
-               self.sn,
-               self.ebn,
-               self.cs,
-               self.get_text())
+        write!(
+            f,
+            "\n{} {} {} {} {:?} [{}]",
+            self.tci,
+            self.sgn,
+            self.sn,
+            self.ebn,
+            self.cs,
+            self.get_text()
+        )
     }
 }
