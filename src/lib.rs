@@ -411,7 +411,7 @@ impl fmt::Display for GsiBlock {
 // TTI Block
 
 #[derive(Debug)]
-enum CumulativeStatus {
+pub enum CumulativeStatus {
     NotPartOfASet,
     FirstInSet,
     IntermediateInSet,
@@ -508,6 +508,39 @@ pub struct TtiBlock {
     cf: u8,
     #[doc="16..127 Text Field"]
     tf: Vec<u8>,
+}
+
+impl TtiBlock {
+    pub fn get_subtitle_group_number(&self) -> u8 {
+        self.sgn
+    }
+    pub fn get_subtitle_number_range(&self) -> u16 {
+        self.sn
+    }
+    pub fn extension_block_number(&self) -> u8 {
+        self.ebn
+    }
+    pub fn cumulative_status(&self) -> &CumulativeStatus {
+        &self.cs
+    }
+    pub fn time_code_in(&self) -> &Time {
+        &self.tci
+    }
+    pub fn time_code_out(&self) -> &Time {
+        &self.tco
+    }
+    pub fn vertical_position(&self) -> u8 {
+        self.vp
+    }
+    pub fn justification_code(&self) -> u8 {
+        self.jc
+    }
+    pub fn comment_flag(&self) -> u8 {
+        self.cf
+    }
+    pub fn tf(&self) -> &Vec<u8> {
+        &self.tf
+    }
 }
 
 
