@@ -511,29 +511,26 @@ impl TtiBlock {
     pub fn get_subtitle_number_range(&self) -> u16 {
         self.sn
     }
-    pub fn extension_block_number(&self) -> u8 {
+    pub fn get_extension_block_number(&self) -> u8 {
         self.ebn
     }
-    pub fn cumulative_status(&self) -> &CumulativeStatus {
+    pub fn get_cumulative_status(&self) -> &CumulativeStatus {
         &self.cs
     }
-    pub fn time_code_in(&self) -> &Time {
+    pub fn get_time_code_in(&self) -> &Time {
         &self.tci
     }
-    pub fn time_code_out(&self) -> &Time {
+    pub fn get_time_code_out(&self) -> &Time {
         &self.tco
     }
-    pub fn vertical_position(&self) -> u8 {
+    pub fn get_vertical_position(&self) -> u8 {
         self.vp
     }
-    pub fn justification_code(&self) -> u8 {
+    pub fn get_justification_code(&self) -> u8 {
         self.jc
     }
-    pub fn comment_flag(&self) -> u8 {
+    pub fn get_comment_flag(&self) -> u8 {
         self.cf
-    }
-    pub fn tf(&self) -> &Vec<u8> {
-        &self.tf
     }
 }
 
