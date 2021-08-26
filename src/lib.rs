@@ -45,10 +45,10 @@ impl Stl {
     }
 
     pub fn write_to_file(&self, filename: &str) -> Result<(), io::Error> {
-        let mut f = try!(File::create(filename));
-        try!(f.write_all(&self.gsi.serialize()));
+        let mut f = File::create(filename)?;
+        f.write_all(&self.gsi.serialize())?;
         for tti in self.ttis.iter() {
-            try!(f.write_all(&tti.serialize()));
+            f.write_all(&tti.serialize())?;
         }
         Ok(())
     }
@@ -66,9 +66,9 @@ impl Stl {
 }
 
 pub fn parse_stl_from_file(filename: &str) -> Result<Stl, ParseError> {
-    let mut f = try!(File::open(filename));
+    let mut f = File::open(filename)?;
     let mut buffer = vec![];
-    try!(f.read_to_end(&mut buffer));
+    f.read_to_end(&mut buffer)?;
 
     parse_stl_from_slice(&buffer)
 }
