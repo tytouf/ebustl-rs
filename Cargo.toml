@@ -8,7 +8,7 @@ repository = "https://github.com/tytouf/ebustl-rs"
 readme = "README.md"
 keywords = ["stl", "subtitle", "parser"]
 categories = ["multimedia:video", "parser-implementations"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 nom = "^2.1"
