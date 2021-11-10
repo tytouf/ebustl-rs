@@ -1,9 +1,9 @@
 extern crate ebustl;
 
-use std::env;
-use std::process;
-use std::error::Error;
 use ebustl::parse_stl_from_file;
+use std::env;
+use std::error::Error;
+use std::process;
 
 fn print_usage() {
     println!("dump file.stl\n");
