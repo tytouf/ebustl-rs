@@ -488,7 +488,7 @@ impl GsiBlock {
         res
     }
 }
-     
+
 impl Default for GsiBlock {
     fn default() -> Self {
         Self::new()
