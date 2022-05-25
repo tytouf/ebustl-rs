@@ -238,18 +238,18 @@ mod tests {
         );
     }
     //Comented out since the test file is propritary
-    // #[test]
-    // fn test_parse_file() {
-    //     let stl = parse_stl_from_file("stls/test.stl")
-    //         .map_err(|err| err.to_string())
-    //         .expect("Parse stl");
-    //     println!("STL:\n{:?}", stl);
-    //     assert_eq!(382, stl.ttis.len());
-    //     assert_eq!(
-    //         "Als we nou op zo'n liftje\r\n\r\nonze hut bouwen.\r\n\r\n",
-    //         stl.ttis.get(110).unwrap().get_text()
-    //     );
-    // }
+    #[test]
+    fn test_parse_file() {
+        let stl = parse_stl_from_file("stls/test.stl")
+            .map_err(|err| err.to_string())
+            .expect("Parse stl");
+        println!("STL:\n{:?}", stl);
+        assert_eq!(13, stl.ttis.len());
+        assert_eq!(
+            "    dans la baie de New York.\r\n",
+            stl.ttis.get(11).unwrap().get_text()
+        );
+    }
 
     /* TODO
     #[test]
