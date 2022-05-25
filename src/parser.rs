@@ -244,6 +244,8 @@ mod tests {
             .map_err(|err| err.to_string())
             .expect("Parse stl");
         println!("STL:\n{:?}", stl);
+        assert_eq!(1_u8,stl.gsi.tnd);
+        assert_eq!(1_u8,stl.gsi.dsn);
         assert_eq!(13, stl.ttis.len());
         assert_eq!(
             "    dans la baie de New York.\r\n",
