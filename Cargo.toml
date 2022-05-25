@@ -1,6 +1,6 @@
 [package]
 name = "ebustl"
-version = "0.2.0"
+version = "0.3.0"
 description = "Parse subtitle files in the EBU-STL format with Rust."
 authors = ["Christophe Augier <christophe.augier@gmail.com>"]
 license = "MIT"
@@ -14,5 +14,5 @@ edition = "2021"
 nom = "7.1.1"
 iso6937 = "^0.1"
 chrono = "0.4"
-thiserror = "1.0"                                                               
+thiserror = "1.0"
 
