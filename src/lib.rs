@@ -64,6 +64,12 @@ impl Stl {
     }
 }
 
+impl Default for Stl {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 pub fn parse_stl_from_file(filename: &str) -> Result<Stl, ParseError> {
     let mut f = File::open(filename)?;
     let mut buffer = vec![];
@@ -100,17 +106,17 @@ impl CodePageNumber {
         } else if data[0] == 0x38 && data[1] == 0x36 && data[2] == 0x35 {
             return Ok(CodePageNumber::CPN_865);
         }
-        return Err(ParseError::CodePageNumber);
+        Err(ParseError::CodePageNumber)
     }
 
     fn serialize(&self) -> Vec<u8> {
-        return match *self {
+        match *self {
             CodePageNumber::CPN_437 => vec![0x34, 0x33, 0x37],
             CodePageNumber::CPN_850 => vec![0x38, 0x35, 0x30],
             CodePageNumber::CPN_860 => vec![0x38, 0x36, 0x30],
             CodePageNumber::CPN_863 => vec![0x38, 0x36, 0x33],
             CodePageNumber::CPN_865 => vec![0x38, 0x36, 0x35],
-        };
+        }
     }
 }
 
@@ -124,22 +130,22 @@ pub enum DisplayStandardCode {
 
 impl DisplayStandardCode {
     fn parse(data: u8) -> Result<DisplayStandardCode, ParseError> {
-        return match data {
+        match data {
             0x20 => Ok(DisplayStandardCode::Blank),
             0x30 => Ok(DisplayStandardCode::OpenSubtitling),
             0x31 => Ok(DisplayStandardCode::Level1Teletext),
             0x32 => Ok(DisplayStandardCode::Level2Teletext),
             _ => Err(ParseError::DisplayStandardCode),
-        };
+        }
     }
 
     fn serialize(&self) -> u8 {
-        return match *self {
+        match *self {
             DisplayStandardCode::Blank => 0x20,
             DisplayStandardCode::OpenSubtitling => 0x30,
             DisplayStandardCode::Level1Teletext => 0x31,
             DisplayStandardCode::Level2Teletext => 0x32,
-        };
+        }
     }
 }
 
@@ -151,18 +157,18 @@ pub enum TimeCodeStatus {
 
 impl TimeCodeStatus {
     fn parse(data: u8) -> Result<TimeCodeStatus, ParseError> {
-        return match data {
+        match data {
             0x30 => Ok(TimeCodeStatus::NotIntendedForUse),
             0x31 => Ok(TimeCodeStatus::IntendedForUse),
             _ => Err(ParseError::TimeCodeStatus),
-        };
+        }
     }
 
     fn serialize(&self) -> u8 {
-        return match *self {
+        match *self {
             TimeCodeStatus::NotIntendedForUse => 0x30,
             TimeCodeStatus::IntendedForUse => 0x31,
-        };
+        }
     }
 }
 
@@ -194,13 +200,13 @@ impl CharacterCodeTable {
     }
 
     fn serialize(&self) -> Vec<u8> {
-        return match *self {
+        match *self {
             CharacterCodeTable::Latin => vec![0x30, 0x30],
             CharacterCodeTable::LatinCyrillic => vec![0x30, 0x31],
             CharacterCodeTable::LatinArabic => vec![0x30, 0x32],
             CharacterCodeTable::LatinGreek => vec![0x30, 0x33],
             CharacterCodeTable::LatinHebrew => vec![0x30, 0x34],
-        };
+        }
     }
 }
 
@@ -223,17 +229,17 @@ impl DiskFormatCode {
     }
 
     fn serialize(&self) -> Vec<u8> {
-        return match *self {
+        match *self {
             DiskFormatCode::STL25_01 => String::from("STL25.01").into_bytes(),
             DiskFormatCode::STL30_01 => String::from("STL30.01").into_bytes(),
-        };
+        }
     }
 
     pub fn get_fps(&self) -> usize {
-        return match self {
+        match self {
             DiskFormatCode::STL25_01 => 25,
             DiskFormatCode::STL30_01 => 30,
-        };
+        }
     }
 }
 
@@ -396,8 +402,8 @@ impl GsiBlock {
     }
 }
 
-fn push_string(v: &mut Vec<u8>, s: &String, len: usize) {
-    let addendum = s.clone().into_bytes();
+fn push_string(v: &mut Vec<u8>, s: &str, len: usize) {
+    let addendum = s.to_owned().into_bytes();
     let padding = len - addendum.len();
     v.extend(addendum.iter().cloned());
     v.extend(vec![0x20u8; padding]);
@@ -421,7 +427,7 @@ impl GsiBlock {
             tcd: "".to_string(),
             slr: "".to_string(),
             cd: now.clone(),
-            rd: now.clone(),
+            rd: now,
             rn: "00".to_string(),
             tnb: 0,
             tns: 0,
@@ -479,7 +485,13 @@ impl GsiBlock {
         push_string(&mut res, &self._spare, 447 - 373 + 1);
         push_string(&mut res, &self.uda, 1023 - 448 + 1);
 
-        return res;
+        res
+    }
+}
+     
+impl Default for GsiBlock {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -505,22 +517,22 @@ pub enum CumulativeStatus {
 
 impl CumulativeStatus {
     fn parse(d: u8) -> Result<CumulativeStatus, ParseError> {
-        return match d {
+        match d {
             0 => Ok(CumulativeStatus::NotPartOfASet),
             1 => Ok(CumulativeStatus::FirstInSet),
             2 => Ok(CumulativeStatus::IntermediateInSet),
             3 => Ok(CumulativeStatus::LastInSet),
             _ => Err(ParseError::CumulativeStatus),
-        };
+        }
     }
 
     fn serialize(&self) -> u8 {
-        return match *self {
+        match *self {
             CumulativeStatus::NotPartOfASet => 0,
             CumulativeStatus::FirstInSet => 1,
             CumulativeStatus::IntermediateInSet => 2,
             CumulativeStatus::LastInSet => 3,
-        };
+        }
     }
 }
 
@@ -689,9 +701,10 @@ impl TtiBlock {
                 first = i + 1;
             }
         }
-        return result;
+        result
     }
 
+    #[allow(clippy::vec_init_then_push)]
     fn serialize(&self) -> Vec<u8> {
         let mut res = vec![];
         res.push(self.sgn);
@@ -705,7 +718,7 @@ impl TtiBlock {
         res.push(self.jc);
         res.push(self.cf);
         res.extend(self.tf.iter().cloned());
-        return res;
+        res
     }
 }
 

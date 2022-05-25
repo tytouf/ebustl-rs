@@ -131,37 +131,37 @@ fn parse_gsi_block(input: &[u8]) -> IResult<&[u8], GsiBlock> {
     Ok((
         input,
         GsiBlock {
-            cpn: cpn,
-            dfc: dfc,
-            dsc: dsc,
-            cct: cct,
-            lc: lc,
-            opt: opt,
-            oet: oet,
-            tpt: tpt,
-            tet: tet,
-            tn: tn,
-            tcd: tcd,
-            slr: slr,
-            cd: cd,
-            rd: rd,
-            rn: rn,
-            tnb: tnb,
-            tns: tns,
-            tng: tng,
-            mnc: mnc,
-            mnr: mnr,
-            tcs: tcs,
-            tcp: tcp,
-            tcf: tcf,
-            tnd: tnd,
-            dsn: dsn,
-            co: co,
-            pub_: pub_,
-            en: en,
-            ecd: ecd,
-            _spare: _spare,
-            uda: uda,
+            cpn,
+            dfc,
+            dsc,
+            cct,
+            lc,
+            opt,
+            oet,
+            tpt,
+            tet,
+            tn,
+            tcd,
+            slr,
+            cd,
+            rd,
+            rn,
+            tnb,
+            tns,
+            tng,
+            mnc,
+            mnr,
+            tcs,
+            tcp,
+            tcf,
+            tnd,
+            dsn,
+            co,
+            pub_,
+            en,
+            ecd,
+            _spare,
+            uda,
         },
     ))
 }
@@ -173,7 +173,7 @@ fn parse_time(input: &[u8]) -> IResult<&[u8], Time> {
 
 fn parse_tti_block(input: &[u8]) -> IResult<&[u8], TtiBlock> {
     //Needed to handle the many1 operator, that expects an error when done.
-    if input.len() == 0 {
+    if input.is_empty() {
         return Err(nom::Err::Error(nom::error::ParseError::from_error_kind(
             input,
             nom::error::ErrorKind::Eof,
@@ -189,7 +189,7 @@ fn parse_tti_block(input: &[u8]) -> IResult<&[u8], TtiBlock> {
         be_u8,
         be_u8,
         be_u8,
-        take(112 as u16),
+        take(112_u16),
     ))(input)?;
     Ok((
         input,
@@ -237,18 +237,19 @@ mod tests {
             Err(nom::Err::Incomplete(Needed::new(1)))
         );
     }
-    #[test]
-    fn test_parse_file() {
-        let stl = parse_stl_from_file("stls/test.stl")
-            .map_err(|err| err.to_string())
-            .expect("Parse stl");
-        println!("STL:\n{:?}", stl);
-        assert_eq!(382, stl.ttis.len());
-        assert_eq!(
-            "Als we nou op zo'n liftje\r\n\r\nonze hut bouwen.\r\n\r\n",
-            stl.ttis.get(110).unwrap().get_text()
-        );
-    }
+    //Comented out since the test file is propritary
+    // #[test]
+    // fn test_parse_file() {
+    //     let stl = parse_stl_from_file("stls/test.stl")
+    //         .map_err(|err| err.to_string())
+    //         .expect("Parse stl");
+    //     println!("STL:\n{:?}", stl);
+    //     assert_eq!(382, stl.ttis.len());
+    //     assert_eq!(
+    //         "Als we nou op zo'n liftje\r\n\r\nonze hut bouwen.\r\n\r\n",
+    //         stl.ttis.get(110).unwrap().get_text()
+    //     );
+    // }
 
     /* TODO
     #[test]
