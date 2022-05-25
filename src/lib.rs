@@ -1,7 +1,6 @@
-#[macro_use]
-extern crate nom;
 extern crate chrono;
 extern crate iso6937;
+extern crate nom;
 
 use std::fmt;
 use std::fs::File;

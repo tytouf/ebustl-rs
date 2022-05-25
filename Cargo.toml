@@ -11,7 +11,7 @@ categories = ["multimedia:video", "parser-implementations"]
 edition = "2021"
 
 [dependencies]
-nom = "^2.1"
+nom = "7.1.0"
 iso6937 = "^0.1"
 chrono = "0.4"
 thiserror = "1.0"                                                               
