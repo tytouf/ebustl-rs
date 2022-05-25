@@ -1,6 +1,14 @@
 use std::str::FromStr;
 
-use nom::{be_u8, le_u16, IResult};
+use nom::{
+    self,
+    bytes::streaming::take,
+    combinator::map_res,
+    multi::many1,
+    number::streaming::{be_u8, le_u16},
+    sequence::tuple,
+    IResult, InputIter, InputTake,
+};
 use thiserror::Error;
 
 use super::*;
@@ -27,132 +35,181 @@ pub enum ParseError {
     Unknown,
 }
 
-named!(
-    parse_stl<Stl>,
-    do_parse!(
-        gsi: parse_gsi_block
-            >> ttis: many1!(parse_tti_block)
-            >> (Stl {
-                gsi: gsi,
-                ttis: ttis
-            })
-    )
-);
+fn parse_stl(input: &[u8]) -> IResult<&[u8], Stl> {
+    let (input, (gsi, ttis)) = tuple((parse_gsi_block, many1(parse_tti_block)))(input)?;
+    Ok((input, Stl { gsi, ttis }))
+}
 
 pub fn parse_stl_from_slice(input: &[u8]) -> Result<Stl, ParseError> {
     match parse_stl(input) {
-        IResult::Error(_) => Err(ParseError::Unknown), //TODO from custom to ParseError
-        IResult::Incomplete(_) => Err(ParseError::Incomplete),
-        IResult::Done(_, stl) => Ok(stl),
+        Ok((_, stl)) => Ok(stl),
+        Err(nom::Err::Error(_) | nom::Err::Failure(_)) => Err(ParseError::Unknown),
+        Err(nom::Err::Incomplete(_)) => Err(ParseError::Incomplete),
     }
 }
 
-named!(
-    parse_gsi_block<GsiBlock>,
-    do_parse!(
-        cpn: map_res!(take!(3), CodePageNumber::parse)
-            >> dfc: map_res!(take_str!(10 - 3 + 1), DiskFormatCode::parse)
-            >> dsc: map_res!(be_u8, DisplayStandardCode::parse)
-            >> cct: map_res!(take!(13 - 12 + 1), CharacterCodeTable::parse)
-            >> lc: map_res!(take_str!(15 - 14 + 1), String::from_str)
-            >> opt: map_res!(take_str!(47 - 16 + 1), String::from_str)
-            >> oet: map_res!(take_str!(79 - 48 + 1), String::from_str)
-            >> tpt: map_res!(take_str!(111 - 80 + 1), String::from_str)
-            >> tet: map_res!(take_str!(143 - 112 + 1), String::from_str)
-            >> tn: map_res!(take_str!(175 - 144 + 1), String::from_str)
-            >> tcd: map_res!(take_str!(207 - 176 + 1), String::from_str)
-            >> slr: map_res!(take_str!(223 - 208 + 1), String::from_str)
-            >> cd: map_res!(take_str!(229 - 224 + 1), String::from_str)
-            >> rd: map_res!(take_str!(235 - 230 + 1), String::from_str)
-            >> rn: map_res!(take_str!(237 - 236 + 1), String::from_str)
-            >> tnb: map_res!(take_str!(242 - 238 + 1), u16::from_str)
-            >> tns: map_res!(take_str!(247 - 243 + 1), u16::from_str)
-            >> tng: map_res!(take_str!(250 - 248 + 1), u16::from_str)
-            >> mnc: map_res!(take_str!(252 - 251 + 1), u16::from_str)
-            >> mnr: map_res!(take_str!(254 - 253 + 1), u16::from_str)
-            >> tcs: map_res!(be_u8, TimeCodeStatus::parse)
-            >> tcp: map_res!(take_str!(263 - 256 + 1), String::from_str)
-            >> tcf: map_res!(take_str!(271 - 264 + 1), String::from_str)
-            >> tnd: map_res!(take_str!(1), u8::from_str)
-            >> dsn: map_res!(take_str!(1), u8::from_str)
-            >> co: map_res!(take_str!(276 - 274 + 1), String::from_str)
-            >> pub_: map_res!(take_str!(308 - 277 + 1), String::from_str)
-            >> en: map_res!(take_str!(340 - 309 + 1), String::from_str)
-            >> ecd: map_res!(take_str!(372 - 341 + 1), String::from_str)
-            >> _spare: map_res!(take_str!(447 - 373 + 1), String::from_str)
-            >> uda: map_res!(take_str!(1023 - 448 + 1), String::from_str)
-            >> (GsiBlock {
-                cpn: cpn,
-                dfc: dfc,
-                dsc: dsc,
-                cct: cct,
-                lc: lc,
-                opt: opt,
-                oet: oet,
-                tpt: tpt,
-                tet: tet,
-                tn: tn,
-                tcd: tcd,
-                slr: slr,
-                cd: cd,
-                rd: rd,
-                rn: rn,
-                tnb: tnb,
-                tns: tns,
-                tng: tng,
-                mnc: mnc,
-                mnr: mnr,
-                tcs: tcs,
-                tcp: tcp,
-                tcf: tcf,
-                tnd: tnd,
-                dsn: dsn,
-                co: co,
-                pub_: pub_,
-                en: en,
-                ecd: ecd,
-                _spare: _spare,
-                uda: uda,
-            })
-    )
-);
+pub fn take_str<'a, C: nom::ToUsize, Error: nom::error::ParseError<&'a [u8]>>(
+    count: C,
+) -> impl Fn(&'a [u8]) -> IResult<&'a [u8], &'a str, Error> {
+    let c = count.to_usize();
+    move |i: &[u8]| match i.slice_index(c) {
+        Err(i) => Err(nom::Err::Incomplete(i)),
+        Ok(index) => {
+            let (first, rest) = i.take_split(index);
+            Ok((
+                first,
+                str::from_utf8(rest).map_err(|_err| {
+                    nom::Err::Error(Error::from_error_kind(rest, nom::error::ErrorKind::Fail))
+                })?,
+            ))
+        }
+    }
+}
 
-named!(
-    parse_time<Time>,
-    do_parse!(h: be_u8 >> m: be_u8 >> s: be_u8 >> f: be_u8 >> (Time::new(h, m, s, f)))
-);
+fn parse_gsi_block(input: &[u8]) -> IResult<&[u8], GsiBlock> {
+    let (
+        input,
+        (
+            cpn,
+            dfc,
+            dsc,
+            cct,
+            lc,
+            opt,
+            oet,
+            tpt,
+            tet,
+            tn,
+            tcd,
+            slr,
+            cd,
+            rd,
+            rn,
+            tnb,
+            tns,
+            tng,
+            mnc,
+            mnr,
+            tcs,
+        ),
+    ) = tuple((
+        map_res(take(3_u16), CodePageNumber::parse),
+        map_res(take_str(10 - 3 + 1_u16), DiskFormatCode::parse),
+        map_res(be_u8, DisplayStandardCode::parse),
+        map_res(take(13 - 12 + 1_u16), CharacterCodeTable::parse),
+        map_res(take_str(15 - 14 + 1_u16), String::from_str),
+        map_res(take_str(47 - 16 + 1_u16), String::from_str),
+        map_res(take_str(79 - 48 + 1_u16), String::from_str),
+        map_res(take_str(111 - 80 + 1_u16), String::from_str),
+        map_res(take_str(143 - 112 + 1_u16), String::from_str),
+        map_res(take_str(175 - 144 + 1_u16), String::from_str),
+        map_res(take_str(207 - 176 + 1_u16), String::from_str),
+        map_res(take_str(223 - 208 + 1_u16), String::from_str),
+        map_res(take_str(229 - 224 + 1_u16), String::from_str),
+        map_res(take_str(235 - 230 + 1_u16), String::from_str),
+        map_res(take_str(237 - 236 + 1_u16), String::from_str),
+        map_res(take_str(242 - 238 + 1_u16), u16::from_str),
+        map_res(take_str(247 - 243 + 1_u16), u16::from_str),
+        map_res(take_str(250 - 248 + 1_u16), u16::from_str),
+        map_res(take_str(252 - 251 + 1_u16), u16::from_str),
+        map_res(take_str(254 - 253 + 1_u16), u16::from_str),
+        map_res(be_u8, TimeCodeStatus::parse),
+    ))(input)?;
 
-named!(
-    parse_tti_block<TtiBlock>,
-    do_parse!(
-        sgn: be_u8
-            >> sn: le_u16
-            >> ebn: be_u8
-            >> cs: map_res!(be_u8, CumulativeStatus::parse)
-            >> tci: parse_time
-            >> tco: parse_time
-            >> vp: be_u8
-            >> jc: be_u8
-            >> cf: be_u8
-            >> tf: take!(112)
-            >> (TtiBlock {
-                sgn: sgn,
-                sn: sn,
-                ebn: ebn,
-                cs: cs,
-                tci: tci,
-                tco: tco,
-                vp: vp,
-                jc: jc,
-                cf: cf,
-                tf: tf.to_vec()
-            })
-    )
-);
+    let (input, (tcp, tcf, tnd, dsn, co, pub_, en, ecd, _spare, uda)) = tuple((
+        map_res(take_str(263 - 256 + 1_u16), String::from_str),
+        map_res(take_str(271 - 264 + 1_u16), String::from_str),
+        map_res(take_str(1_u16), u8::from_str),
+        map_res(take_str(1_u16), u8::from_str),
+        map_res(take_str(276 - 274 + 1_u16), String::from_str),
+        map_res(take_str(308 - 277 + 1_u16), String::from_str),
+        map_res(take_str(340 - 309 + 1_u16), String::from_str),
+        map_res(take_str(372 - 341 + 1_u16), String::from_str),
+        map_res(take_str(447 - 373 + 1_u16), String::from_str),
+        map_res(take_str(1023 - 448 + 1_u16), String::from_str),
+    ))(input)?;
+    Ok((
+        input,
+        GsiBlock {
+            cpn,
+            dfc,
+            dsc,
+            cct,
+            lc,
+            opt,
+            oet,
+            tpt,
+            tet,
+            tn,
+            tcd,
+            slr,
+            cd,
+            rd,
+            rn,
+            tnb,
+            tns,
+            tng,
+            mnc,
+            mnr,
+            tcs,
+            tcp,
+            tcf,
+            tnd,
+            dsn,
+            co,
+            pub_,
+            en,
+            ecd,
+            _spare,
+            uda,
+        },
+    ))
+}
+
+fn parse_time(input: &[u8]) -> IResult<&[u8], Time> {
+    let (input, (h, m, s, f)) = tuple((be_u8, be_u8, be_u8, be_u8))(input)?;
+    Ok((input, Time::new(h, m, s, f)))
+}
+
+fn parse_tti_block(input: &[u8]) -> IResult<&[u8], TtiBlock> {
+    //Needed to handle the many1 operator, that expects an error when done.
+    if input.is_empty() {
+        return Err(nom::Err::Error(nom::error::ParseError::from_error_kind(
+            input,
+            nom::error::ErrorKind::Eof,
+        )));
+    }
+    let (input, (sgn, sn, ebn, cs, tci, tco, vp, jc, cf, tf)) = tuple((
+        be_u8,
+        le_u16,
+        be_u8,
+        map_res(be_u8, CumulativeStatus::parse),
+        parse_time,
+        parse_time,
+        be_u8,
+        be_u8,
+        be_u8,
+        take(112_u16),
+    ))(input)?;
+    Ok((
+        input,
+        TtiBlock {
+            sgn,
+            sn,
+            ebn,
+            cs,
+            tci,
+            tco,
+            vp,
+            jc,
+            cf,
+            tf: tf.to_vec(),
+        },
+    ))
+}
 
 #[cfg(test)]
 mod tests {
-    use nom::IResult::*;
     use nom::Needed;
 
     use super::*;
@@ -165,7 +222,7 @@ mod tests {
 
         assert_eq!(
             parse_time(ok),
-            Done(
+            Ok((
                 empty,
                 Time {
                     hours: 1,
@@ -173,13 +230,26 @@ mod tests {
                     seconds: 3,
                     frames: 4,
                 }
-            )
+            ))
         );
         assert_eq!(
             parse_time(incomplete),
-            Incomplete(Needed::Size(incomplete.len() + 1))
+            Err(nom::Err::Incomplete(Needed::new(1)))
         );
     }
+    //Comented out since the test file is propritary
+    // #[test]
+    // fn test_parse_file() {
+    //     let stl = parse_stl_from_file("stls/test.stl")
+    //         .map_err(|err| err.to_string())
+    //         .expect("Parse stl");
+    //     println!("STL:\n{:?}", stl);
+    //     assert_eq!(382, stl.ttis.len());
+    //     assert_eq!(
+    //         "Als we nou op zo'n liftje\r\n\r\nonze hut bouwen.\r\n\r\n",
+    //         stl.ttis.get(110).unwrap().get_text()
+    //     );
+    // }
 
     /* TODO
     #[test]
