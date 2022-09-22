@@ -553,7 +553,7 @@ pub enum Justification {
     Right,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Time {
     pub hours: u8,
     pub minutes: u8,

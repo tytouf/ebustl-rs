@@ -14,7 +14,7 @@ use thiserror::Error;
 
 use super::*;
 
-#[derive(Debug, Error, PartialEq)]
+#[derive(Debug, Error, PartialEq, Eq)]
 pub enum ParseError {
     #[error("IoError: {0}")]
     IoError(String),
@@ -54,7 +54,7 @@ impl<I> nom::error::ParseError<I> for ParseError {
 
     // if combining multiple errors, we show them one after the other
     fn append(_: I, kind: ErrorKind, other: Self) -> Self {
-        let message = format!("{:?}:\n{}", kind, other.to_string());
+        let message = format!("{:?}:\n{}", kind, other);
         Self::NomParsingError { message }
     }
 
@@ -126,8 +126,8 @@ fn parse_gsi_block(input: &[u8]) -> IResult<&[u8], GsiBlock> {
         map_res(be_u8, DisplayStandardCode::parse),
         map_res(take(13 - 12 + 1_u16), CharacterCodeTable::parse),
     ))(input)?;
-    let cpn = CodePageNumber::from_u16(codepage).map_err(|e| nom::Err::Error(e))?;
-    let coding = CodePageDecoder::new(codepage).map_err(|e| nom::Err::Error(e))?;
+    let cpn = CodePageNumber::from_u16(codepage).map_err(nom::Err::Error)?;
+    let coding = CodePageDecoder::new(codepage).map_err(nom::Err::Error)?;
 
     let (input, (lc, opt, oet, tpt, tet, tn, tcd, slr, cd, rd, rn, tnb, tns, tng, mnc, mnr, tcs)) =
         tuple((
