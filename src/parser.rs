@@ -67,66 +67,57 @@ pub fn take_str<'a, C: nom::ToUsize, Error: nom::error::ParseError<&'a [u8]>>(
 }
 
 fn parse_gsi_block(input: &[u8]) -> IResult<&[u8], GsiBlock> {
-    let (
-        input,
-        (
-            cpn,
-            dfc,
-            dsc,
-            cct,
-            lc,
-            opt,
-            oet,
-            tpt,
-            tet,
-            tn,
-            tcd,
-            slr,
-            cd,
-            rd,
-            rn,
-            tnb,
-            tns,
-            tng,
-            mnc,
-            mnr,
-            tcs,
-        ),
-    ) = tuple((
-        map_res(take(3_u16), CodePageNumber::parse),
+    let (input, (codepage, dfc, dsc, cct)) = tuple((
+        map_res(take_str(3_u16), u16::from_str),
         map_res(take_str(10 - 3 + 1_u16), DiskFormatCode::parse),
         map_res(be_u8, DisplayStandardCode::parse),
         map_res(take(13 - 12 + 1_u16), CharacterCodeTable::parse),
-        map_res(take_str(15 - 14 + 1_u16), String::from_str),
-        map_res(take_str(47 - 16 + 1_u16), String::from_str),
-        map_res(take_str(79 - 48 + 1_u16), String::from_str),
-        map_res(take_str(111 - 80 + 1_u16), String::from_str),
-        map_res(take_str(143 - 112 + 1_u16), String::from_str),
-        map_res(take_str(175 - 144 + 1_u16), String::from_str),
-        map_res(take_str(207 - 176 + 1_u16), String::from_str),
-        map_res(take_str(223 - 208 + 1_u16), String::from_str),
-        map_res(take_str(229 - 224 + 1_u16), String::from_str),
-        map_res(take_str(235 - 230 + 1_u16), String::from_str),
-        map_res(take_str(237 - 236 + 1_u16), String::from_str),
-        map_res(take_str(242 - 238 + 1_u16), u16::from_str),
-        map_res(take_str(247 - 243 + 1_u16), u16::from_str),
-        map_res(take_str(250 - 248 + 1_u16), u16::from_str),
-        map_res(take_str(252 - 251 + 1_u16), u16::from_str),
-        map_res(take_str(254 - 253 + 1_u16), u16::from_str),
-        map_res(be_u8, TimeCodeStatus::parse),
     ))(input)?;
+    let cpn = CodePageNumber::from_u16(codepage).map_err(|_e| {
+        nom::Err::Error(nom::error::ParseError::from_error_kind(
+            input,
+            nom::error::ErrorKind::Fail,
+        ))
+    })?;
+    let coding = CodePageDecoder::new(codepage).map_err(|_e| {
+        nom::Err::Error(nom::error::ParseError::from_error_kind(
+            input,
+            nom::error::ErrorKind::Fail,
+        ))
+    })?;
+
+    let (input, (lc, opt, oet, tpt, tet, tn, tcd, slr, cd, rd, rn, tnb, tns, tng, mnc, mnr, tcs)) =
+        tuple((
+            map_res(take(15 - 14 + 1_u16), |data| coding.parse(data)),
+            map_res(take(47 - 16 + 1_u16), |data| coding.parse(data)),
+            map_res(take(79 - 48 + 1_u16), |data| coding.parse(data)),
+            map_res(take(111 - 80 + 1_u16), |data| coding.parse(data)),
+            map_res(take(143 - 112 + 1_u16), |data| coding.parse(data)),
+            map_res(take(175 - 144 + 1_u16), |data| coding.parse(data)),
+            map_res(take(207 - 176 + 1_u16), |data| coding.parse(data)),
+            map_res(take(223 - 208 + 1_u16), |data| coding.parse(data)),
+            map_res(take(229 - 224 + 1_u16), |data| coding.parse(data)),
+            map_res(take(235 - 230 + 1_u16), |data| coding.parse(data)),
+            map_res(take(237 - 236 + 1_u16), |data| coding.parse(data)),
+            map_res(take_str(242 - 238 + 1_u16), u16::from_str),
+            map_res(take_str(247 - 243 + 1_u16), u16::from_str),
+            map_res(take_str(250 - 248 + 1_u16), u16::from_str),
+            map_res(take_str(252 - 251 + 1_u16), u16::from_str),
+            map_res(take_str(254 - 253 + 1_u16), u16::from_str),
+            map_res(be_u8, TimeCodeStatus::parse),
+        ))(input)?;
 
     let (input, (tcp, tcf, tnd, dsn, co, pub_, en, ecd, _spare, uda)) = tuple((
-        map_res(take_str(263 - 256 + 1_u16), String::from_str),
-        map_res(take_str(271 - 264 + 1_u16), String::from_str),
+        map_res(take(263 - 256 + 1_u16), |data| coding.parse(data)),
+        map_res(take(271 - 264 + 1_u16), |data| coding.parse(data)),
         map_res(take_str(1_u16), u8::from_str),
         map_res(take_str(1_u16), u8::from_str),
-        map_res(take_str(276 - 274 + 1_u16), String::from_str),
-        map_res(take_str(308 - 277 + 1_u16), String::from_str),
-        map_res(take_str(340 - 309 + 1_u16), String::from_str),
-        map_res(take_str(372 - 341 + 1_u16), String::from_str),
-        map_res(take_str(447 - 373 + 1_u16), String::from_str),
-        map_res(take_str(1023 - 448 + 1_u16), String::from_str),
+        map_res(take(276 - 274 + 1_u16), |data| coding.parse(data)),
+        map_res(take(308 - 277 + 1_u16), |data| coding.parse(data)),
+        map_res(take(340 - 309 + 1_u16), |data| coding.parse(data)),
+        map_res(take(372 - 341 + 1_u16), |data| coding.parse(data)),
+        map_res(take(447 - 373 + 1_u16), |data| coding.parse(data)),
+        map_res(take(1023 - 448 + 1_u16), |data| coding.parse(data)),
     ))(input)?;
     Ok((
         input,
@@ -252,7 +243,6 @@ mod tests {
             stl.ttis.get(11).unwrap().get_text()
         );
     }
-
     /* TODO
     #[test]
     fn test_parse_tti() {
