@@ -86,7 +86,7 @@ struct CodePageDecoder {
 impl CodePageDecoder {
     pub fn new(codepage: u16) -> Result<Self, ParseError> {
         Ok(Self {
-            coding: Coding::new(codepage).map_err(|_e| ParseError::CodePageNumber)?,
+            coding: Coding::new(codepage).map_err(|_e| ParseError::CodePageNumber(codepage))?,
         })
     }
 
@@ -125,7 +125,7 @@ impl CodePageNumber {
             860 => Ok(CodePageNumber::CPN_860),
             863 => Ok(CodePageNumber::CPN_863),
             865 => Ok(CodePageNumber::CPN_865),
-            _ => Err(ParseError::CodePageNumber),
+            _ => Err(ParseError::CodePageNumber(codepage)),
         }
     }
 }
