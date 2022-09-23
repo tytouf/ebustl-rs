@@ -8,6 +8,7 @@ use std::io;
 use std::io::prelude::*;
 use std::str;
 
+use codepage_strings::Coding;
 pub mod parser;
 use crate::parser::parse_stl_from_slice;
 pub use crate::parser::ParseError;
@@ -78,6 +79,22 @@ pub fn parse_stl_from_file(filename: &str) -> Result<Stl, ParseError> {
     parse_stl_from_slice(&buffer)
 }
 
+struct CodePageDecoder {
+    coding: Coding,
+}
+
+impl CodePageDecoder {
+    pub fn new(codepage: u16) -> Result<Self, ParseError> {
+        Ok(Self {
+            coding: Coding::new(codepage).map_err(|_e| ParseError::CodePageNumber(codepage))?,
+        })
+    }
+
+    fn parse(&self, data: &[u8]) -> Result<String, ParseError> {
+        Ok(self.coding.decode_lossy(data).to_string())
+    }
+}
+
 // GSI Block
 
 #[derive(Debug)]
@@ -91,24 +108,6 @@ pub enum CodePageNumber {
 }
 
 impl CodePageNumber {
-    fn parse(data: &[u8]) -> Result<CodePageNumber, ParseError> {
-        if data.len() != 3 {
-            return Err(ParseError::CodePageNumber);
-        }
-        if data[0] == 0x34 && data[1] == 0x33 && data[2] == 0x37 {
-            return Ok(CodePageNumber::CPN_437);
-        } else if data[0] == 0x38 && data[1] == 0x35 && data[2] == 0x30 {
-            return Ok(CodePageNumber::CPN_850);
-        } else if data[0] == 0x38 && data[1] == 0x36 && data[2] == 0x30 {
-            return Ok(CodePageNumber::CPN_860);
-        } else if data[0] == 0x38 && data[1] == 0x36 && data[2] == 0x33 {
-            return Ok(CodePageNumber::CPN_863);
-        } else if data[0] == 0x38 && data[1] == 0x36 && data[2] == 0x35 {
-            return Ok(CodePageNumber::CPN_865);
-        }
-        Err(ParseError::CodePageNumber)
-    }
-
     fn serialize(&self) -> Vec<u8> {
         match *self {
             CodePageNumber::CPN_437 => vec![0x34, 0x33, 0x37],
@@ -116,6 +115,17 @@ impl CodePageNumber {
             CodePageNumber::CPN_860 => vec![0x38, 0x36, 0x30],
             CodePageNumber::CPN_863 => vec![0x38, 0x36, 0x33],
             CodePageNumber::CPN_865 => vec![0x38, 0x36, 0x35],
+        }
+    }
+
+    pub(crate) fn from_u16(codepage: u16) -> Result<CodePageNumber, ParseError> {
+        match codepage {
+            437 => Ok(CodePageNumber::CPN_437),
+            850 => Ok(CodePageNumber::CPN_850),
+            860 => Ok(CodePageNumber::CPN_860),
+            863 => Ok(CodePageNumber::CPN_863),
+            865 => Ok(CodePageNumber::CPN_865),
+            _ => Err(ParseError::CodePageNumber(codepage)),
         }
     }
 }
@@ -488,7 +498,7 @@ impl GsiBlock {
         res
     }
 }
-     
+
 impl Default for GsiBlock {
     fn default() -> Self {
         Self::new()
@@ -543,7 +553,7 @@ pub enum Justification {
     Right,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Time {
     pub hours: u8,
     pub minutes: u8,
