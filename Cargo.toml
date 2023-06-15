@@ -12,8 +12,8 @@ edition = "2021"
 
 [dependencies]
 nom = "7.1.1"
-iso6937 = "^0.1"
 chrono = "0.4"
 thiserror = "1.0"                                                               
 codepage-strings = "1.0.2"
+textcode = "0.2.2"
 

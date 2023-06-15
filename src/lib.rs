@@ -1,5 +1,4 @@
 extern crate chrono;
-extern crate iso6937;
 extern crate nom;
 
 use std::fmt;
@@ -9,6 +8,7 @@ use std::io::prelude::*;
 use std::str;
 
 use codepage_strings::Coding;
+use textcode::iso6937;
 pub mod parser;
 use crate::parser::parse_stl_from_slice;
 pub use crate::parser::ParseError;
@@ -666,7 +666,7 @@ impl TtiBlock {
 
     fn encode_text(txt: &str, dh: bool) -> Vec<u8> {
         const TF_LENGTH: usize = 112;
-        let text = iso6937::encode(txt);
+        let text = iso6937::encode_to_vec(txt);
         let mut res = Vec::with_capacity(TF_LENGTH);
         if dh {
             res.push(0x0d);
@@ -701,7 +701,7 @@ impl TtiBlock {
                 0xa0..=0xff => false,
             } {
                 if first != i {
-                    result.push_str(&iso6937::decode(&self.tf[first..i]));
+                    result.push_str(&iso6937::decode_to_string(&self.tf[first..i]));
                 }
                 if c == 0x8f {
                     break;
