@@ -8,7 +8,7 @@ use std::io::prelude::*;
 use std::str;
 
 use codepage_strings::Coding;
-use textcode::iso6937;
+use textcode::{iso6937, iso8859_5, iso8859_6, iso8859_7, iso8859_8};
 pub mod parser;
 use crate::parser::parse_stl_from_slice;
 pub use crate::parser::ParseError;
@@ -59,7 +59,7 @@ impl Stl {
             println!("Warning: sub text is too long!");
         }
         self.gsi.tnb += 1; // First TTI has sn=1
-        let tti = TtiBlock::new(self.gsi.tnb, tci, tco, txt, opt);
+        let tti = TtiBlock::new(self.gsi.tnb, tci, tco, txt, opt, self.gsi.cct);
         self.gsi.tns += 1;
         self.ttis.push(tti);
     }
@@ -182,7 +182,7 @@ impl TimeCodeStatus {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum CharacterCodeTable {
     Latin,
     LatinCyrillic,
@@ -616,6 +616,8 @@ pub struct TtiBlock {
     cf: u8,
     #[doc = "16..127 Text Field"]
     tf: Vec<u8>,
+    #[doc = "Duplication of the CharacterCodeTable in GsiBlock, do be able to decode/encode text independent of the GsiBlock"]
+    cct: CharacterCodeTable, //Needed for Display/Debug without access to GsiBlock
 }
 
 impl TtiBlock {
@@ -649,7 +651,14 @@ impl TtiBlock {
 }
 
 impl TtiBlock {
-    pub fn new(idx: u16, tci: Time, tco: Time, txt: &str, opt: TtiFormat) -> TtiBlock {
+    pub fn new(
+        idx: u16,
+        tci: Time,
+        tco: Time,
+        txt: &str,
+        opt: TtiFormat,
+        cct: CharacterCodeTable,
+    ) -> TtiBlock {
         TtiBlock {
             sgn: 0,
             sn: idx,
@@ -660,13 +669,21 @@ impl TtiBlock {
             vp: opt.vp,
             jc: opt.jc,
             cf: 0,
-            tf: TtiBlock::encode_text(txt, opt.dh),
+            tf: TtiBlock::encode_text(txt, opt.dh, cct),
+            cct, //Needed for Display/Debug without access to GsiBlock
         }
     }
 
-    fn encode_text(txt: &str, dh: bool) -> Vec<u8> {
+    fn encode_text(txt: &str, dh: bool, cct: CharacterCodeTable) -> Vec<u8> {
         const TF_LENGTH: usize = 112;
-        let text = iso6937::encode_to_vec(txt);
+
+        let text = match cct {
+            CharacterCodeTable::Latin => iso6937::encode_to_vec(txt),
+            CharacterCodeTable::LatinCyrillic => iso8859_5::encode_to_vec(txt),
+            CharacterCodeTable::LatinArabic => iso8859_6::encode_to_vec(txt),
+            CharacterCodeTable::LatinGreek => iso8859_7::encode_to_vec(txt),
+            CharacterCodeTable::LatinHebrew => iso8859_8::encode_to_vec(txt),
+        };
         let mut res = Vec::with_capacity(TF_LENGTH);
         if dh {
             res.push(0x0d);
@@ -701,7 +718,15 @@ impl TtiBlock {
                 0xa0..=0xff => false,
             } {
                 if first != i {
-                    result.push_str(&iso6937::decode_to_string(&self.tf[first..i]));
+                    let data = &self.tf[first..i];
+                    let decoded_string = match self.cct {
+                        CharacterCodeTable::Latin => iso6937::decode_to_string(data),
+                        CharacterCodeTable::LatinCyrillic => iso8859_5::decode_to_string(data),
+                        CharacterCodeTable::LatinArabic => iso8859_6::decode_to_string(data),
+                        CharacterCodeTable::LatinGreek => iso8859_7::decode_to_string(data),
+                        CharacterCodeTable::LatinHebrew => iso8859_8::decode_to_string(data),
+                    };
+                    result.push_str(&decoded_string);
                 }
                 if c == 0x8f {
                     break;

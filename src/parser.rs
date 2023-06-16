@@ -92,7 +92,8 @@ where
 pub type IResult<I, O> = nom::IResult<I, O, ParseError>;
 
 fn parse_stl(input: &[u8]) -> IResult<&[u8], Stl> {
-    let (input, (gsi, ttis)) = tuple((parse_gsi_block, many1(parse_tti_block)))(input)?;
+    let (input, gsi) = parse_gsi_block(input)?;
+    let (input, ttis) = many1(|i| parse_tti_block(gsi.cct, i))(input)?;
     Ok((input, Stl { gsi, ttis }))
 }
 
@@ -205,7 +206,7 @@ fn parse_time(input: &[u8]) -> IResult<&[u8], Time> {
     Ok((input, Time::new(h, m, s, f)))
 }
 
-fn parse_tti_block(input: &[u8]) -> IResult<&[u8], TtiBlock> {
+fn parse_tti_block(cct: CharacterCodeTable, input: &[u8]) -> IResult<&[u8], TtiBlock> {
     //Needed to handle the many1 operator, that expects an error when done.
     if input.is_empty() {
         return Err(nom::Err::Error(nom::error::ParseError::from_error_kind(
@@ -238,6 +239,7 @@ fn parse_tti_block(input: &[u8]) -> IResult<&[u8], TtiBlock> {
             jc,
             cf,
             tf: tf.to_vec(),
+            cct,
         },
     ))
 }
@@ -250,7 +252,7 @@ mod tests {
 
     #[test]
     fn test_parse_time() {
-        let empty: &[u8] = &vec![];
+        let empty: &[u8] = &[];
         let ok = &vec![0x1, 0x2, 0x3, 0x4];
         let incomplete = &vec![0x1];
 
@@ -288,6 +290,24 @@ mod tests {
             "    dans la baie de New York.\r\n",
             stl.ttis.get(11).unwrap().get_text()
         );
+    }
+    #[test]
+    #[ignore]
+    fn test_parse_proprietary_file() {
+        let stl = parse_stl_from_file("stls/proprietary.stl")
+            .map_err(|err| {
+                eprintln!("Error: {}", err);
+                err.to_string()
+            })
+            .expect("Parse stl");
+        println!("STL:\n{:?}", stl);
+        //        assert_eq!(1_u8, stl.gsi.tnd);
+        //        assert_eq!(1_u8, stl.gsi.dsn);
+        //        assert_eq!(28, stl.ttis.len());
+        //        assert_eq!(
+        //            "سوف تقوم بتدريبات بسيطة جدا\u{64b} اليوم",
+        //            stl.ttis.get(11).unwrap().get_text()
+        //        );
     }
     /* TODO
     #[test]
