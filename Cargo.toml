@@ -11,7 +11,7 @@ categories = ["multimedia:video", "parser-implementations"]
 edition = "2021"
 
 [dependencies]
-nom = "7.1.1"
+nom = "7.1.3"
 chrono = "0.4"
 thiserror = "1.0"                                                               
 codepage-strings = "1.0.2"
